@@ -45,6 +45,7 @@ def parse_args():
 
     parser.add_argument('--label-smooth', type=float, default=0.1, help='Label smoothing percent')
 	parser.add_argument("--seed", type=int, default=0)
+	parser.add_argument("--ckpt-folder", type=str, default="/your_ckpt_folder")
 
     args, _ = parser.parse_known_args()
 
@@ -157,13 +158,16 @@ if __name__ == '__main__':
         for i in range(start_epoch, epochs):
             logger.info(f"Epoch {i+1}")
             train_loss = train(model, loss_fn, optimizer, device, train_loader, scheduler, loss_scaler, update_freq, mixup, random_erase)
-            torch.save({
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'scheduler_state_dict': scheduler.state_dict(),
-                'loss_scaler_state_dict': loss_scaler.state_dict(),
-                'start_epoch': i,
-            }, f'models/epoch{i+1}.pth')
+
+			if i == epochs-1:
+				torch.save({
+					'model_state_dict': model.state_dict(),
+					'optimizer_state_dict': optimizer.state_dict(),
+					'scheduler_state_dict': scheduler.state_dict(),
+					'loss_scaler_state_dict': loss_scaler.state_dict(),
+					'start_epoch': i,
+				}, f'{args.ckpt_folder}/models/epoch{i+1}.pth')
+
             val_loss, top_1_val_acc, top_5_val_acc = validate(model, device, val_loader, i, can_visualize=i>=epochs//2)
 			store["accuracy"][f"epoch_{i+1}"] = top_1_val_acc
 			store["loss"][f"epoch_{i+1}"] = val_loss
